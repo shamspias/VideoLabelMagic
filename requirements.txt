@@ -1,0 +1,7 @@
+streamlit
+pydantic
+python-dotenv
+ultralytics
+pillow
+PyYAML
+opencv-python
