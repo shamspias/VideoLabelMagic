@@ -1,5 +1,6 @@
 streamlit
 pydantic
+pydantic-settings
 python-dotenv
 ultralytics
 pillow
