@@ -4,6 +4,7 @@ import streamlit as st
 from config import Config
 from extractor import VideoFrameExtractor
 from formats.roboflow_format import RoboflowFormat
+from formats.cvat_format import CVATFormat
 
 # Import other formats if available
 
@@ -26,7 +27,7 @@ frame_rate = st.number_input("Frame rate", value=config.default_frame_rate)
 model_confidence = st.number_input("Model Confidence", value=0.1)
 
 # Allow users to choose the output format
-format_options = {'Roboflow': RoboflowFormat}  # Add more formats to this dictionary
+format_options = {'Roboflow': RoboflowFormat, 'CVAT': CVATFormat}  # Add more formats to this dictionary
 format_selection = st.selectbox("Choose output format:", list(format_options.keys()))
 
 if st.button('Extract Frames'):
