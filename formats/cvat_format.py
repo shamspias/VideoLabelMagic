@@ -1,5 +1,6 @@
 import os
 import cv2
+import zipfile
 from formats.base_format import BaseFormat
 
 
@@ -72,3 +73,25 @@ class CVATFormat(BaseFormat):
     def ensure_directories(self):
         """Ensures all directories are created and ready for use."""
         super().ensure_directories()  # Ensures base directories are created
+
+    def zip_and_cleanup(self):
+        # Create a zip file and add all the data in the data directory to it.
+        zip_path = os.path.join(self.output_dir, 'cvat_data.zip')
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(self.data_dir, topdown=False):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    zipf.write(file_path, os.path.relpath(file_path, self.data_dir))
+                for dir in dirs:
+                    dir_path = os.path.join(root, dir)
+                    zipf.write(dir_path, os.path.relpath(dir_path, self.data_dir))
+
+        # Clean up the directory by removing all files first, then empty directories.
+        for root, dirs, files in os.walk(self.data_dir, topdown=False):
+            for file in files:
+                os.remove(os.path.join(root, file))
+            for dir in dirs:
+                os.rmdir(os.path.join(root, dir))
+
+        # Finally, remove the base data directory now that it should be empty.
+        os.rmdir(self.data_dir)
