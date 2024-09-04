@@ -8,7 +8,11 @@ config = Config()
 st.title(config.streamlit_title)
 
 uploaded_file = st.file_uploader("Upload a video file", type=['mp4', 'avi', 'mov'])
-model_selection = st.selectbox("Choose a model:", os.listdir(config.models_directory))
+
+# Filter for files ending with .pt
+models = [file for file in os.listdir(config.models_directory) if file.endswith('.pt')]
+model_selection = st.selectbox("Choose a model:", models)
+
 output_dir = st.text_input("Output directory", config.output_directory)
 frame_rate = st.number_input("Frame rate", value=config.default_frame_rate)
 
