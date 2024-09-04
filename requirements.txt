@@ -6,3 +6,4 @@ ultralytics
 pillow
 PyYAML
 opencv-python
+boto3
