@@ -13,58 +13,30 @@ class VideoFrameExtractor:
         frame_rate (float): Desired frame rate to extract images.
         output_dir (str): Base directory to store extracted images and annotations.
         model_path (str): Path to the YOLO model for object detection.
+        class_config_path (str): Path to the class configuration file.
+        output_format (object): Format handler for saving annotations.
     """
 
-    def __init__(self, video_path, frame_rate, output_dir, model_path, class_config_path):
+    def __init__(self, video_path, frame_rate, output_dir, model_path, class_config_path, output_format):
         self.video_path = video_path
         self.frame_rate = frame_rate
-        self.output_dir = os.path.join(output_dir, 'train')
-        self.image_dir = os.path.join(self.output_dir, 'images')
-        self.label_dir = os.path.join(self.output_dir, 'labels')
+        self.output_dir = output_dir
         self.yolo_model = YOLO(os.path.join('models', model_path))
-        # self.supported_classes = ['person', 'car', 'truck', 'tank']
-
-        # Load classes from YAML
+        self.output_format = output_format
         self.supported_classes = self.load_classes(class_config_path)
-
-        # Ensure necessary directories exist
-        os.makedirs(self.image_dir, exist_ok=True)
-        os.makedirs(self.label_dir, exist_ok=True)
-
-        # Create metadata for training
-        self._create_data_yaml()
 
     def load_classes(self, config_path):
         """
         Loads object classes from a YAML configuration file.
-
-        Parameters:
-            config_path (str): Path to the class configuration file.
-
-        Returns:
-            list: A list of class names.
         """
         with open(config_path, 'r') as file:
             class_data = yaml.safe_load(file)
         return [cls['name'] for cls in class_data['classes']]
 
-    def _create_data_yaml(self):
-        """
-        Creates a YAML file to store metadata about the training dataset.
-        """
-        data = {
-            'train': os.path.abspath(self.image_dir),
-            'nc': len(self.supported_classes),
-            'names': self.supported_classes
-        }
-        with open(os.path.join(self.output_dir, '..', 'data.yaml'), 'w') as file:
-            yaml.dump(data, file)
-
     def extract_frames(self, model_confidence):
         """
-        Extracts frames from the video file at the specified frame rate and saves them in the image directory.
-
-        model_confidence (float): Model confidence that help to annotated
+        Extracts frames from the video file at the specified frame rate, annotates them using the YOLO model,
+        and saves using the specified format.
         """
         cap = cv2.VideoCapture(self.video_path)
         if not cap.isOpened():
@@ -81,47 +53,17 @@ class VideoFrameExtractor:
 
             if frame_count % frame_interval == 0:
                 frame_filename = f"{self._get_video_basename()}_image{frame_count}.jpg"
-                frame_path = os.path.join(self.image_dir, frame_filename)
+                frame_path = os.path.join(self.output_dir, 'images', frame_filename)
                 cv2.imwrite(frame_path, frame)
-                self._annotate_frame(frame, frame_path, frame_filename, model_confidence)
+                results = self.yolo_model.predict(frame, conf=model_confidence)
+                self.output_format.save_annotations(frame, frame_path, frame_filename, results, self.supported_classes)
 
             frame_count += 1
 
         cap.release()
 
-    def _annotate_frame(self, frame, frame_path, frame_filename, model_conf):
-        """
-        Annotates the frame using the YOLO model and saves the annotation to a file.
-
-        Parameters:
-            frame (np.array): The frame to be annotated.
-            frame_path (str): Path where the frame image is saved.
-            frame_filename (str): Filename of the frame image.
-        """
-        results = self.yolo_model.predict(frame, conf=model_conf)
-        annotation_filename = frame_filename.replace('.jpg', '.txt')
-        annotation_path = os.path.join(self.label_dir, annotation_filename)
-        img_height, img_width = frame.shape[:2]
-
-        with open(annotation_path, 'w') as f:
-            for result in results:
-                if hasattr(result, 'boxes') and result.boxes is not None:
-                    for box in result.boxes:
-                        class_id = int(box.cls[0])
-                        if self.supported_classes[class_id] in self.supported_classes:
-                            confidence = box.conf[0]
-                            xmin, ymin, xmax, ymax = box.xyxy[0]
-                            x_center = ((xmin + xmax) / 2) / img_width
-                            y_center = ((ymin + ymax) / 2) / img_height
-                            width = (xmax - xmin) / img_width
-                            height = (ymax - ymin) / img_height
-                            f.write(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n")
-
     def _get_video_basename(self):
         """
         Extracts the basename of the video file without its extension.
-
-        Returns:
-            str: The basename of the video file.
         """
         return os.path.splitext(os.path.basename(self.video_path))[0]
