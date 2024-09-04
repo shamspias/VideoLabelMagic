@@ -36,9 +36,9 @@ class CVATFormat(BaseFormat):
                         if box.xyxy.dim() == 2 and box.xyxy.shape[0] == 1:
                             class_id = int(box.cls[0])
                             bbox = box.xyxy[0].tolist()
-                            confidence = box.conf[0]
+                            confidence = box.conf[0] # no need {confidence:.2f}
                             file.write(
-                                f"{class_id} {bbox[0]:.6f} {bbox[1]:.6f} {bbox[2]:.6f} {bbox[3]:.6f} {confidence:.2f}\n")
+                                f"{class_id} {bbox[0]:.6f} {bbox[1]:.6f} {bbox[2]:.6f} {bbox[3]:.6f}\n")
 
         # After saving all annotations, update metadata files
         self.create_metadata_files(supported_classes)
