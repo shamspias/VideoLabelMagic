@@ -2,7 +2,7 @@ import cv2
 import os
 from ultralytics import YOLO
 import yaml
-from utils.image_processor import ImageProcessor  # Make sure this is the correct import path
+from utils.image_processor import ImageProcessor
 
 
 class VideoFrameExtractor:
