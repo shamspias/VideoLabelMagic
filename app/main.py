@@ -5,9 +5,6 @@ from config import Config
 from extractor import VideoFrameExtractor
 from formats.roboflow_format import RoboflowFormat
 from formats.cvat_format import CVATFormat
-from utils.image_processor import ImageProcessor  # Import the ImageProcessor
-
-# Import other formats if available
 
 config = Config()
 
