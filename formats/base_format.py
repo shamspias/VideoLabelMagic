@@ -22,3 +22,7 @@ class BaseFormat:
             supported_classes (list): List of supported class names.
         """
         raise NotImplementedError("Subclasses should implement this method.")
+
+    def save_annotations(self, frame, frame_path, frame_filename, results, supported_classes):
+        """ Method to save annotations; implemented in subclasses. """
+        raise NotImplementedError("Subclasses should implement this method.")
