@@ -28,7 +28,10 @@ class ImageProcessor:
         Returns:
             np.array: The resized image.
         """
-        return cv2.resize(image, self.output_size)
+        resized_image = cv2.resize(image, self.output_size, interpolation=cv2.INTER_AREA)
+        assert resized_image.shape[0] == self.output_size[1] and resized_image.shape[1] == self.output_size[
+            0], "Resizing did not match expected dimensions."
+        return resized_image
 
     def convert_to_grayscale(self, image):
         """
@@ -40,23 +43,18 @@ class ImageProcessor:
         Returns:
             np.array: The grayscale image.
         """
+        if len(image.shape) != 3 or image.shape[2] != 3:
+            raise ValueError("Input image is not in expected RGB format.")
         return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    def adjust_rgb(self, image, red=1.0, green=1.0, blue=1.0):
+    def rotate_image_90_degrees(self, image):
         """
-        Adjusts the RGB channels of an image.
+        Rotates an image by 90 degrees clockwise.
 
         Parameters:
-            image (np.array): The original image.
-            red (float): The multiplier for the red channel.
-            green (float): The multiplier for the green channel.
-            blue (float): The multiplier for the blue channel.
+            image (np.array): The image to rotate.
 
         Returns:
-            np.array: The RGB adjusted image.
+            np.array: The rotated image.
         """
-        b, g, r = cv2.split(image)
-        adjusted_b = cv2.multiply(b, blue)
-        adjusted_g = cv2.multiply(g, green)
-        adjusted_r = cv2.multiply(r, red)
-        return cv2.merge((adjusted_b, adjusted_g, adjusted_r))
+        return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
