@@ -9,6 +9,8 @@ st.title(config.streamlit_title)
 
 uploaded_file = st.file_uploader("Upload a video file", type=['mp4', 'avi', 'mov'])
 
+class_config = st.selectbox("Choose class configuration:", os.listdir(config.object_class_directory))
+
 # Filter for files ending with .pt
 models = [file for file in os.listdir(config.models_directory) if file.endswith('.pt')]
 model_selection = st.selectbox("Choose a model:", models)
