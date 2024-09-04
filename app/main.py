@@ -25,7 +25,7 @@ if st.button('Extract Frames'):
         video_path = 'temp_video.mp4'
         with open(video_path, 'wb') as f:
             f.write(uploaded_file.getbuffer())
-        extractor = VideoFrameExtractor(video_path, frame_rate, output_dir, model_selection)
+        extractor = VideoFrameExtractor(video_path, frame_rate, output_dir, model_selection, class_config)
         extractor.extract_frames(model_confidence)
         st.success('Extraction Completed!')
     else:
