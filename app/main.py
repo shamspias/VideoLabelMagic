@@ -5,6 +5,7 @@ from config import Config
 from extractor import VideoFrameExtractor
 from formats.roboflow_format import RoboflowFormat
 from formats.cvat_format import CVATFormat
+from utils.image_processor import ImageProcessor  # Import the ImageProcessor
 
 # Import other formats if available
 
@@ -25,6 +26,17 @@ model_selection = st.selectbox("Choose a model:", models)
 output_dir = st.text_input("Output directory", config.output_directory)
 frame_rate = st.number_input("Frame rate", value=config.default_frame_rate)
 model_confidence = st.number_input("Model Confidence", value=0.1)
+
+# New fields for image transformation options
+image_width = st.number_input("Image width", value=640)
+image_height = st.number_input("Image height", value=640)
+
+transformation_options = st.multiselect('Select image transformations:', ['Resize', 'Grayscale', 'Rotate 90 degrees'])
+transformations = {
+    'resize': 'Resize' in transformation_options,
+    'grayscale': 'Grayscale' in transformation_options,
+    'rotate': 'Rotate 90 degrees' in transformation_options
+}
 
 # Allow users to choose the output format
 format_options = {'Roboflow': RoboflowFormat, 'CVAT': CVATFormat}  # Add more formats to this dictionary
@@ -58,7 +70,7 @@ if st.button('Extract Frames'):
         # Extract frames using the VideoFrameExtractor with the chosen format
         try:
             extractor = VideoFrameExtractor(video_path, frame_rate, specific_output_dir, model_selection,
-                                            class_config_path, output_format_instance)
+                                            class_config_path, output_format_instance, transformations)
             extractor.extract_frames(model_confidence)
 
             if format_selection == "CVAT":  # If CVAT export then it will save as zip format
