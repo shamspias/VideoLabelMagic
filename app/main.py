@@ -5,78 +5,98 @@ from config import Config
 from extractor import VideoFrameExtractor
 from formats.roboflow_format import RoboflowFormat
 from formats.cvat_format import CVATFormat
+from utils.storage_manager import StorageManager
 
-config = Config()
 
-st.title(config.streamlit_title)
+class VideoLabelApp:
+    def __init__(self):
+        self.config = Config()
+        self.storage_manager = StorageManager(self.config)
+        self.format_options = {'Roboflow': RoboflowFormat, 'CVAT': CVATFormat}
+        self.setup_ui()
 
-uploaded_file = st.file_uploader("Upload a video file", type=['mp4', 'avi', 'mov'])
+    def setup_ui(self):
+        """
+        Set up the Streamlit user interface for VideoLabelMagic.
+        """
+        st.title(self.config.streamlit_title)
+        st.sidebar.header("Storage Options")
+        self.storage_option = st.sidebar.radio("Choose storage type:", ('Local', 'Object Storage'))
 
-# Update directory path for class configurations
-class_config_files = [f for f in os.listdir(config.object_class_directory) if f.endswith('.yaml')]
-class_config_selection = st.selectbox("Choose class configuration:", class_config_files)
+        if self.storage_option == 'Local':
+            self.uploaded_file = st.file_uploader("Upload a video file", type=['mp4', 'avi', 'mov'])
+            if self.uploaded_file is not None:
+                self.process_ui()
 
-# Filter for files ending with .pt
-models = [file for file in os.listdir(config.models_directory) if file.endswith('.pt')]
-model_selection = st.selectbox("Choose a model:", models)
+    def process_ui(self):
+        """
+        Continue UI setup based on user input and file selection.
+        """
+        class_config_files = [f for f in os.listdir(self.config.object_class_directory) if f.endswith('.yaml')]
+        self.class_config_selection = st.selectbox("Choose class configuration:", class_config_files)
+        models = [file for file in os.listdir(self.config.models_directory) if file.endswith('.pt')]
+        self.model_selection = st.selectbox("Choose a model:", models)
+        self.frame_rate = st.number_input("Frame rate", value=self.config.default_frame_rate)
+        self.model_confidence = st.number_input("Model Confidence", value=0.1)
+        transformation_options = st.multiselect('Select image transformations:',
+                                                ['Resize', 'Grayscale', 'Rotate 90 degrees'])
+        self.transformations = {
+            'resize': 'Resize' in transformation_options,
+            'grayscale': 'Grayscale' in transformation_options,
+            'rotate': 'Rotate 90 degrees' in transformation_options
+        }
+        self.format_selection = st.selectbox("Choose output format:", list(self.format_options.keys()))
+        if st.button('Extract Frames'):
+            self.process_video()
 
-output_dir = st.text_input("Output directory", config.output_directory)
-frame_rate = st.number_input("Frame rate", value=config.default_frame_rate)
-model_confidence = st.number_input("Model Confidence", value=0.1)
+    def process_video(self):
+        """
+        Process the uploaded video file according to the specified settings and store outputs in the selected storage type.
+        """
+        if self.uploaded_file is not None:
+            self.process_local_video()
 
-# New fields for image transformation options
-image_width = st.number_input("Image width", value=640)
-image_height = st.number_input("Image height", value=640)
-
-transformation_options = st.multiselect('Select image transformations:', ['Resize', 'Grayscale', 'Rotate 90 degrees'])
-transformations = {
-    'resize': 'Resize' in transformation_options,
-    'grayscale': 'Grayscale' in transformation_options,
-    'rotate': 'Rotate 90 degrees' in transformation_options
-}
-
-# Allow users to choose the output format
-format_options = {'Roboflow': RoboflowFormat, 'CVAT': CVATFormat}  # Add more formats to this dictionary
-format_selection = st.selectbox("Choose output format:", list(format_options.keys()))
-
-if st.button('Extract Frames'):
-    if uploaded_file is not None:
-        # Create temp directory if it does not exist
+    def process_local_video(self):
+        """
+        Handle local video processing, saving the uploaded file temporarily before processing.
+        """
         temp_dir = 'temp'
         os.makedirs(temp_dir, exist_ok=True)
-
-        # Generate a unique filename
-        unique_filename = uploaded_file.name[:5] + "_" + str(uuid.uuid4())
+        unique_filename = self.uploaded_file.name[:5] + "_" + str(uuid.uuid4())
         video_filename = unique_filename + ".mp4"
         video_path = os.path.join(temp_dir, video_filename)
 
-        # Save the uploaded file
         with open(video_path, 'wb') as f:
-            f.write(uploaded_file.getbuffer())
+            f.write(self.uploaded_file.getbuffer())
 
-        # Construct the class configuration path
-        class_config_path = os.path.join(config.object_class_directory, class_config_selection)
+        # Check if the file was written and exists before proceeding
+        if os.path.exists(video_path) and os.path.isfile(video_path):
+            st.write(f"Debug: File path is {video_path}")  # Debugging output
+            self.run_extraction(video_path, unique_filename)
+        else:
+            st.error("Failed to save the file locally or file path is incorrect.")
 
-        # Create a specific output directory named after the unique file
-        specific_output_dir = os.path.join(output_dir, unique_filename)
+    def run_extraction(self, video_path, unique_filename):
+        """
+        Run the extraction process using the specified VideoFrameExtractor.
+        """
+        class_config_path = os.path.join(self.config.object_class_directory, self.class_config_selection)
+        specific_output_dir = os.path.join(self.config.output_directory, unique_filename)
         os.makedirs(specific_output_dir, exist_ok=True)
+        output_format_instance = self.format_options[self.format_selection](specific_output_dir)
 
-        # Instantiate the selected output format
-        output_format_instance = format_options[format_selection](specific_output_dir)
-
-        # Extract frames using the VideoFrameExtractor with the chosen format
         try:
-            extractor = VideoFrameExtractor(video_path, frame_rate, specific_output_dir, model_selection,
-                                            class_config_path, output_format_instance, transformations)
-            extractor.extract_frames(model_confidence)
-
-            if format_selection == "CVAT":  # If CVAT export then it will save as zip format
+            extractor = VideoFrameExtractor(self.config, video_path, self.frame_rate, specific_output_dir,
+                                            self.model_selection, class_config_path, output_format_instance,
+                                            self.transformations)
+            extractor.extract_frames(self.model_confidence)
+            if self.format_selection == "CVAT":
                 output_format_instance.zip_and_cleanup()
-
             st.success('Extraction Completed!')
-            # Delete the temporary video file after successful extraction
             os.remove(video_path)
         except Exception as e:
             st.error(f"An error occurred during frame extraction: {str(e)}")
-    else:
-        st.error("Please upload a file to proceed.")
+
+
+if __name__ == "__main__":
+    app = VideoLabelApp()
