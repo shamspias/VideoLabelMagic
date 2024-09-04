@@ -15,7 +15,7 @@ class VideoFrameExtractor:
         model_path (str): Path to the YOLO model for object detection.
     """
 
-    def __init__(self, video_path, frame_rate, output_dir, model_path):
+    def __init__(self, video_path, frame_rate, output_dir, model_path, class_config_path):
         self.video_path = video_path
         self.frame_rate = frame_rate
         self.output_dir = os.path.join(output_dir, 'train')
@@ -24,12 +24,29 @@ class VideoFrameExtractor:
         self.yolo_model = YOLO(os.path.join('models', model_path))
         self.supported_classes = ['person', 'car', 'truck', 'tank']
 
+        # Load classes from YAML
+        self.supported_classes = self.load_classes(class_config_path)
+
         # Ensure necessary directories exist
         os.makedirs(self.image_dir, exist_ok=True)
         os.makedirs(self.label_dir, exist_ok=True)
 
         # Create metadata for training
         self._create_data_yaml()
+
+    def load_classes(self, config_path):
+        """
+        Loads object classes from a YAML configuration file.
+
+        Parameters:
+            config_path (str): Path to the class configuration file.
+
+        Returns:
+            list: A list of class names.
+        """
+        with open(config_path, 'r') as file:
+            class_data = yaml.safe_load(file)
+        return [cls['name'] for cls in class_data['classes']]
 
     def _create_data_yaml(self):
         """
