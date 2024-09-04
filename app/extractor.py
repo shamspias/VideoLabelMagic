@@ -22,7 +22,7 @@ class VideoFrameExtractor:
         self.image_dir = os.path.join(self.output_dir, 'images')
         self.label_dir = os.path.join(self.output_dir, 'labels')
         self.yolo_model = YOLO(os.path.join('models', model_path))
-        self.supported_classes = ['person', 'car', 'truck', 'tank']
+        # self.supported_classes = ['person', 'car', 'truck', 'tank']
 
         # Load classes from YAML
         self.supported_classes = self.load_classes(class_config_path)
