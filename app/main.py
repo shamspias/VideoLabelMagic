@@ -9,7 +9,10 @@ st.title(config.streamlit_title)
 
 uploaded_file = st.file_uploader("Upload a video file", type=['mp4', 'avi', 'mov'])
 
-class_config = st.selectbox("Choose class configuration:", os.listdir(config.object_class_directory))
+
+# Update directory path for class configurations
+class_config_files = [f for f in os.listdir(config.object_class_directory) if f.endswith('.yaml')]
+class_config_selection = st.selectbox("Choose class configuration:", class_config_files)
 
 # Filter for files ending with .pt
 models = [file for file in os.listdir(config.models_directory) if file.endswith('.pt')]
@@ -25,7 +28,9 @@ if st.button('Extract Frames'):
         video_path = 'temp_video.mp4'
         with open(video_path, 'wb') as f:
             f.write(uploaded_file.getbuffer())
-        extractor = VideoFrameExtractor(video_path, frame_rate, output_dir, model_selection, class_config)
+
+        class_config_path = os.path.join(config.object_class_directory, class_config_selection)
+        extractor = VideoFrameExtractor(video_path, frame_rate, output_dir, model_selection, class_config_path)
         extractor.extract_frames(model_confidence)
         st.success('Extraction Completed!')
     else:
