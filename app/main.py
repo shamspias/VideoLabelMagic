@@ -1,5 +1,6 @@
 import os
 import uuid
+import shutil
 import streamlit as st
 from config import Config
 from extractor import VideoFrameExtractor
@@ -72,9 +73,23 @@ class VideoLabelApp:
         self.run_extraction(video_path, unique_filename)
 
     def process_cloud_storage_video(self):
-        local_path = os.path.join('temp', self.selected_file)
-        self.storage_manager.download_file_from_s3(self.selected_file, local_path)
-        self.run_extraction(local_path, os.path.splitext(self.selected_file)[0])
+        """
+        Handle the download of the file from cloud storage, rename it similar to the local process,
+        and perform the frame extraction.
+        """
+        temp_dir = 'temp'
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Generate unique filename similar to the local upload handling
+        file_basename = os.path.basename(self.selected_file)
+        unique_filename = file_basename[:5] + "_" + str(uuid.uuid4()) + ".mp4"  # Consistent renaming
+        video_path = os.path.join(temp_dir, unique_filename)
+
+        # Download the file from S3 into the temp directory
+        self.storage_manager.download_file_from_s3(self.selected_file, video_path)
+
+        # Proceed to run the extraction process
+        self.run_extraction(video_path, unique_filename)
 
     def run_extraction(self, video_path, unique_filename):
         class_config_path = os.path.join(self.config.object_class_directory, self.class_config_selection)
@@ -90,15 +105,41 @@ class VideoLabelApp:
                 output_format_instance.zip_and_cleanup()
             if self.storage_option == 'Object Storage':
                 self.upload_outputs(specific_output_dir)
+
+            # Clean up: Remove the temporary video file after processing
+            if os.path.exists(video_path):
+                os.remove(video_path)
+                print(f"Deleted temporary video file: {video_path}")
+
             st.success('Extraction Completed!')
         except Exception as e:
             st.error(f"An error occurred during frame extraction: {str(e)}")
 
     def upload_outputs(self, directory):
-        output_files = [os.path.join(directory, f) for f in os.listdir(directory) if
-                        os.path.isfile(os.path.join(directory, f))]
-        for file in output_files:
-            self.storage_manager.upload_file_to_s3(file, "processed/" + os.path.basename(file))
+        """
+        Upload all files and directories from the specified directory to the S3 bucket,
+        maintaining the same structure under a 'processed/' prefix in S3.
+        Args:
+            directory (str): The local directory path containing the files to be uploaded.
+        """
+        # Determine the base path for the directory to maintain structure in S3
+        base_path = os.path.dirname(directory)
+
+        # Walk through the directory and upload each file to S3
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                local_file_path = os.path.join(root, file)
+                # Calculate the relative path for S3 key to maintain the folder structure
+                relative_path = os.path.relpath(local_file_path, base_path)
+                s3_object_name = os.path.join("processed", relative_path)  # Use 'processed/' prefix in S3
+
+                # Upload the file to S3, preserving directory structure
+                self.storage_manager.upload_file_to_s3(local_file_path, s3_object_name)
+                print(f"Uploaded {local_file_path} to S3 as {s3_object_name}")
+
+        # Optionally, delete the directory locally after uploading
+        shutil.rmtree(directory)
+        print(f"Deleted local directory after upload: {directory}")
 
 
 if __name__ == "__main__":
