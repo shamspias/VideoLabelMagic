@@ -15,7 +15,7 @@ class Config(BaseSettings):
     s3_access_key: Optional[str] = ""
     s3_secret_key: Optional[str] = ""
     s3_bucket_name: Optional[str] = ""
-    s3_region_name: Optional[str] = "ru-1"
+    s3_region_name: Optional[str] = ""
 
     class Config:
         env_file = ".env"
