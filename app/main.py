@@ -29,8 +29,9 @@ if st.button('Extract Frames'):
         os.makedirs(temp_dir, exist_ok=True)
 
         # Generate a unique filename
-        unique_filename = uploaded_file.name[:5] + "_" + str(uuid.uuid4()) + ".mp4"
-        video_path = os.path.join(temp_dir, unique_filename)
+        unique_filename = uploaded_file.name[:5] + "_" + str(uuid.uuid4())
+        video_filename = unique_filename + ".mp4"
+        video_path = os.path.join(temp_dir, video_filename)
 
         # Save the uploaded file
         with open(video_path, 'wb') as f:
@@ -39,15 +40,19 @@ if st.button('Extract Frames'):
         # Construct the class configuration path
         class_config_path = os.path.join(config.object_class_directory, class_config_selection)
 
+        # Create a specific output directory named after the unique file
+        specific_output_dir = os.path.join(output_dir, unique_filename)
+        os.makedirs(specific_output_dir, exist_ok=True)
+
         # Extract frames using the VideoFrameExtractor
         try:
-            extractor = VideoFrameExtractor(video_path, frame_rate, output_dir, model_selection, class_config_path)
+            extractor = VideoFrameExtractor(video_path, frame_rate, specific_output_dir, model_selection,
+                                            class_config_path)
             extractor.extract_frames(model_confidence)
             st.success('Extraction Completed!')
+            # Delete the temporary video file after successful extraction
+            os.remove(video_path)
         except Exception as e:
             st.error(f"An error occurred during frame extraction: {str(e)}")
-        finally:
-            # Clean up the temporary video file after processing
-            os.remove(video_path)
     else:
         st.error("Please upload a file to proceed.")
