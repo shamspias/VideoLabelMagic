@@ -60,6 +60,10 @@ if st.button('Extract Frames'):
             extractor = VideoFrameExtractor(video_path, frame_rate, specific_output_dir, model_selection,
                                             class_config_path, output_format_instance)
             extractor.extract_frames(model_confidence)
+
+            if format_selection == "CVAT":  # If CVAT export then it will save as zip format
+                output_format_instance.zip_and_cleanup()
+
             st.success('Extraction Completed!')
             # Delete the temporary video file after successful extraction
             os.remove(video_path)
