@@ -20,12 +20,10 @@ class CVATFormat(BaseFormat):
         """
         Saves annotations and images in CVAT-compatible format directly in obj_train_data.
         """
-        # Convert to PNG for image file
         frame_filename_png = frame_filename.replace('.jpg', '.png')
         image_path = os.path.join(self.image_dir, frame_filename_png)
         cv2.imwrite(image_path, frame)  # Save the frame image
 
-        # Text file for annotations stored in the same directory as images
         annotation_filename = frame_filename_png.replace('.png', '.txt')
         annotation_path = os.path.join(self.image_dir, annotation_filename)
 
@@ -35,10 +33,12 @@ class CVATFormat(BaseFormat):
                     for box in result.boxes:
                         if box.xyxy.dim() == 2 and box.xyxy.shape[0] == 1:
                             class_id = int(box.cls[0])
-                            bbox = box.xyxy[0].tolist()
-                            confidence = box.conf[0] # no need {confidence:.2f}
-                            file.write(
-                                f"{class_id} {bbox[0]:.6f} {bbox[1]:.6f} {bbox[2]:.6f} {bbox[3]:.6f}\n")
+                            xmin, ymin, xmax, ymax = box.xyxy[0].tolist()
+                            x_center = ((xmin + xmax) / 2) / frame.shape[1]
+                            y_center = ((ymin + ymax) / 2) / frame.shape[0]
+                            width = (xmax - xmin) / frame.shape[1]
+                            height = (ymax - ymin) / frame.shape[0]
+                            file.write(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n")
 
         # After saving all annotations, update metadata files
         self.create_metadata_files(supported_classes)
