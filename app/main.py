@@ -3,6 +3,9 @@ import uuid
 import streamlit as st
 from config import Config
 from extractor import VideoFrameExtractor
+from formats.roboflow_format import RoboflowFormat
+
+# Import other formats if available
 
 config = Config()
 
@@ -21,6 +24,10 @@ model_selection = st.selectbox("Choose a model:", models)
 output_dir = st.text_input("Output directory", config.output_directory)
 frame_rate = st.number_input("Frame rate", value=config.default_frame_rate)
 model_confidence = st.number_input("Model Confidence", value=0.1)
+
+# Allow users to choose the output format
+format_options = {'Roboflow': RoboflowFormat}  # Add more formats to this dictionary
+format_selection = st.selectbox("Choose output format:", list(format_options.keys()))
 
 if st.button('Extract Frames'):
     if uploaded_file is not None:
@@ -44,10 +51,13 @@ if st.button('Extract Frames'):
         specific_output_dir = os.path.join(output_dir, unique_filename)
         os.makedirs(specific_output_dir, exist_ok=True)
 
-        # Extract frames using the VideoFrameExtractor
+        # Instantiate the selected output format
+        output_format_instance = format_options[format_selection](specific_output_dir)
+
+        # Extract frames using the VideoFrameExtractor with the chosen format
         try:
             extractor = VideoFrameExtractor(video_path, frame_rate, specific_output_dir, model_selection,
-                                            class_config_path)
+                                            class_config_path, output_format_instance)
             extractor.extract_frames(model_confidence)
             st.success('Extraction Completed!')
             # Delete the temporary video file after successful extraction
