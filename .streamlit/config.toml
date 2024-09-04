@@ -1,0 +1,2 @@
+[server]
+maxUploadSize = 20480  # size in MB, set to 20GB
