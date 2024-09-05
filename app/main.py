@@ -44,7 +44,6 @@ class VideoLabelApp:
         models = [file for file in os.listdir(self.config.models_directory) if file.endswith('.pt')]
         self.model_selection = st.selectbox("Choose a model:", models)
         self.frame_rate = st.number_input("Frame rate", value=self.config.default_frame_rate)
-        self.model_confidence = st.number_input("Model Confidence", value=0.1)
         transformation_options = st.multiselect('Select image transformations:',
                                                 ['Resize', 'Grayscale', 'Rotate 90 degrees'])
         self.transformations = {
@@ -54,6 +53,12 @@ class VideoLabelApp:
         }
         self.format_selection = st.selectbox("Choose output format:", list(self.format_options.keys()))
         self.sahi_enabled = st.sidebar.checkbox("Enable SAHI", value=self.config.sahi_enabled)
+        if self.sahi_enabled:
+            self.config.sahi_model_type = st.sidebar.selectbox("Model Architecture:", ["yolov8", "yolov9", "yolov10"])
+            self.config.sahi_slice_size = st.sidebar.slider("SAHI slice size:", 128, 512, (256, 256))
+            self.config.sahi_overlap_ratio = st.sidebar.slider("SAHI overlap ratio:", 0.1, 0.5, 0.2)
+        self.model_confidence = st.number_input("Model Confidence", value=0.1)
+
         if st.button('Extract Frames'):
             self.process_video()
 
