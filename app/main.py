@@ -53,7 +53,7 @@ class VideoLabelApp:
             'rotate': 'Rotate 90 degrees' in transformation_options
         }
         self.format_selection = st.selectbox("Choose output format:", list(self.format_options.keys()))
-        self.use_sahi = st.checkbox("Use SAHI for sliced predictions")
+        self.sahi_enabled = st.sidebar.checkbox("Enable SAHI", value=self.config.sahi_enabled)
         if st.button('Extract Frames'):
             self.process_video()
 
