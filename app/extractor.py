@@ -25,6 +25,10 @@ class VideoFrameExtractor:
         self.supported_classes = self.load_classes(self.class_config_path)
         self.image_processor = ImageProcessor(output_size=self.transformations.get('size', (640, 640)))
 
+        self.sahi_utils = SahiUtils(os.path.join('models', model_path), **sahi_config) if sahi_config else None
+        self.output_format.sahi_enabled = bool(sahi_config)
+        self.output_format.sahi_utils = self.sahi_utils
+
         # Debugging output to ensure path handling
         if not os.path.exists(self.video_path):
             raise FileNotFoundError(f"The specified video file was not found at {self.video_path}")
@@ -63,8 +67,9 @@ class VideoFrameExtractor:
 
                 for key, transformed_image in transformed_images.items():
                     if transformed_image.ndim == 2:  # Check if the image is grayscale
+                        # Convert back to RGB format for consistency
                         transformed_image = cv2.cvtColor(transformed_image,
-                                                         cv2.COLOR_GRAY2BGR)  # Convert back to RGB format for consistency
+                                                         cv2.COLOR_GRAY2BGR)
 
                     frame_filename = f"{self._get_video_basename()}_image{frame_count}_{key}.jpg"
                     frame_path = os.path.join(self.output_dir, 'images', frame_filename)
