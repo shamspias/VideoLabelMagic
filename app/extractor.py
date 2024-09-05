@@ -3,6 +3,7 @@ import os
 from ultralytics import YOLO
 import yaml
 from utils.image_processor import ImageProcessor
+from utils.sahi_utils import SahiUtils
 
 
 class VideoFrameExtractor:
