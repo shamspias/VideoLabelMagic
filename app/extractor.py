@@ -13,7 +13,7 @@ class VideoFrameExtractor:
     """
 
     def __init__(self, config, video_path, frame_rate, output_dir, model_path, class_config_path, output_format,
-                 transformations):
+                 transformations, sahi_config=None):
         self.config = config
         self.video_path = video_path  # Ensure this is a string representing the path to the video file.
         self.frame_rate = frame_rate
