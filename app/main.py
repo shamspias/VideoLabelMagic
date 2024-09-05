@@ -11,6 +11,7 @@ from utils.storage_manager import StorageManager
 
 class VideoLabelApp:
     def __init__(self):
+        self.sahi_config = None
         self.config = Config()
         self.storage_manager = StorageManager(self.config)
         self.format_options = {'Roboflow': RoboflowFormat, 'CVAT': CVATFormat}
@@ -55,8 +56,17 @@ class VideoLabelApp:
         self.sahi_enabled = st.sidebar.checkbox("Enable SAHI", value=self.config.sahi_enabled)
         if self.sahi_enabled:
             self.config.sahi_model_type = st.sidebar.selectbox("Model Architecture:", ["yolov8", "yolov9", "yolov10"])
+            self.config.sahi_device = st.sidebar.selectbox("Device:", ["cpu"])
             self.config.sahi_slice_size = st.sidebar.slider("SAHI slice size:", 128, 512, (256, 256))
             self.config.sahi_overlap_ratio = st.sidebar.slider("SAHI overlap ratio:", 0.1, 0.5, 0.2)
+            self.sahi_config = {
+                'model_type': self.config.sahi_model_type,
+                'slice_size': self.config.sahi_slice_size,
+                'overlap_ratio': self.config.sahi_overlap_ratio,
+                'device': self.config.sahi_device  # Can be updated to use GPU if available
+            }
+        else:
+            self.sahi_config = None
         self.model_confidence = st.number_input("Model Confidence", value=0.1)
 
         if st.button('Extract Frames'):
@@ -105,7 +115,7 @@ class VideoLabelApp:
         try:
             extractor = VideoFrameExtractor(self.config, video_path, self.frame_rate, specific_output_dir,
                                             self.model_selection, class_config_path, output_format_instance,
-                                            self.transformations)
+                                            self.transformations, self.sahi_config)
             extractor.extract_frames(self.model_confidence)
             if self.format_selection == "CVAT":
                 output_format_instance.zip_and_cleanup()
