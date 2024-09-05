@@ -86,3 +86,5 @@ how to make contributions.
 ## License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+
+Powered by [Indikat](https://indikat.tech)

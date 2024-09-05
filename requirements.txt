@@ -7,3 +7,4 @@ pillow
 PyYAML
 opencv-python
 boto3
+sahi
