@@ -49,11 +49,11 @@ class BaseFormat:
         Raises:
             NotImplementedError: If `_save_annotations` is not implemented in the subclass.
         """
-        if self.sahi_enabled and self.sahi_utils:
-            if hasattr(self.sahi_utils, 'perform_sliced_inference'):
-                results = self.sahi_utils.perform_sliced_inference(frame)
-            else:
-                raise AttributeError("sahi_utils object does not have 'perform_sliced_inference' method.")
+        # if self.sahi_enabled and self.sahi_utils:
+        #     if hasattr(self.sahi_utils, 'perform_sliced_inference'):
+        #         results = self.sahi_utils.perform_sliced_inference(frame)
+        #     else:
+        #         raise AttributeError("sahi_utils object does not have 'perform_sliced_inference' method.")
         self._save_annotations(frame, frame_path, frame_filename, results, supported_classes)
 
     def _save_annotations(self, frame, frame_path: str, frame_filename: str, results: list, supported_classes: list):
