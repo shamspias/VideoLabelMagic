@@ -25,9 +25,11 @@ class VideoFrameExtractor:
         self.supported_classes = self.load_classes(self.class_config_path)
         self.image_processor = ImageProcessor(output_size=self.transformations.get('size', (640, 640)))
 
-        self.sahi_utils = SahiUtils(os.path.join('models', model_path), **sahi_config) if sahi_config else None
-        self.output_format.sahi_enabled = bool(sahi_config)
-        self.output_format.sahi_utils = self.sahi_utils
+        # Only initialize SahiUtils if SAHI is enabled
+        if sahi_config:
+            self.sahi_utils = SahiUtils(os.path.join('models', model_path), **sahi_config)
+        else:
+            self.sahi_utils = None
 
         # Debugging output to ensure path handling
         if not os.path.exists(self.video_path):
@@ -46,9 +48,6 @@ class VideoFrameExtractor:
         return [cls['name'] for cls in class_data['classes']]
 
     def extract_frames(self, model_confidence):
-        """
-        Extract and process frames from the video, and save them using the specified output format.
-        """
         cap = cv2.VideoCapture(self.video_path)
         if not cap.isOpened():
             raise ValueError(f"Failed to open video stream for {self.video_path}")
@@ -66,23 +65,45 @@ class VideoFrameExtractor:
                 transformed_images = self.apply_transformations(frame)
 
                 for key, transformed_image in transformed_images.items():
-                    if transformed_image.ndim == 2:  # Check if the image is grayscale
-                        # Convert back to RGB format for consistency
-                        transformed_image = cv2.cvtColor(transformed_image,
-                                                         cv2.COLOR_GRAY2BGR)
+                    if transformed_image.ndim == 2:  # Grayscale to RGB for consistency
+                        transformed_image = cv2.cvtColor(transformed_image, cv2.COLOR_GRAY2BGR)
 
                     frame_filename = f"{self._get_video_basename()}_image{frame_count}_{key}.jpg"
                     frame_path = os.path.join(self.output_dir, 'images', frame_filename)
 
-                    # Save images locally or to configured storage
                     cv2.imwrite(frame_path, transformed_image)
-                    results = self.yolo_model.predict(transformed_image, conf=model_confidence)
-                    self.output_format.save_annotations(transformed_image, frame_path, frame_filename, results,
+                    if self.sahi_utils:
+                        results = self.sahi_utils.perform_sliced_inference(transformed_image)
+                    else:
+                        results = self.yolo_model.predict(transformed_image, conf=model_confidence, verbose=False)
+
+                    formatted_results = self.format_results_for_annotation(results, self.sahi_utils is not None)
+                    # print(formatted_results)
+                    self.output_format.save_annotations(transformed_image, frame_path, frame_filename,
+                                                        formatted_results,
                                                         self.supported_classes)
 
             frame_count += 1
 
         cap.release()
+
+    def format_results_for_annotation(self, results, sahi_enabled):
+        if sahi_enabled:
+            formatted_results = []
+            for object_prediction in results.object_prediction_list:
+                bbox = object_prediction.bbox
+                category = object_prediction.category
+                formatted_result = {
+                    'class_id': int(category.id),
+                    'xmin': bbox.minx,
+                    'ymin': bbox.miny,
+                    'xmax': bbox.maxx,
+                    'ymax': bbox.maxy
+                }
+                formatted_results.append(formatted_result)
+            return formatted_results
+        else:
+            return results
 
     def apply_transformations(self, frame):
         """
