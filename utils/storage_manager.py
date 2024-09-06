@@ -21,7 +21,7 @@ class StorageManager:
                 aws_access_key_id=self.config.s3_access_key,
                 aws_secret_access_key=self.config.s3_secret_key
             )
-            print(f"Connected to S3 endpoint: {self.config.s3_endpoint_url} (Region: {self.config.s3_region_name})")
+            # print(f"Connected to S3 endpoint: {self.config.s3_endpoint_url} (Region: {self.config.s3_region_name})")
         except Exception as e:
             raise RuntimeError(f"Error initializing S3 client: {str(e)}")
 
