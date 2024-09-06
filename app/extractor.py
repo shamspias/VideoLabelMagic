@@ -77,33 +77,13 @@ class VideoFrameExtractor:
                     else:
                         results = self.yolo_model.predict(transformed_image, conf=model_confidence, verbose=False)
 
-                    formatted_results = self.format_results_for_annotation(results, self.sahi_utils is not None)
-                    # print(formatted_results)
                     self.output_format.save_annotations(transformed_image, frame_path, frame_filename,
-                                                        formatted_results,
+                                                        results,
                                                         self.supported_classes)
 
             frame_count += 1
 
         cap.release()
-
-    def format_results_for_annotation(self, results, sahi_enabled):
-        if sahi_enabled:
-            formatted_results = []
-            for object_prediction in results.object_prediction_list:
-                bbox = object_prediction.bbox
-                category = object_prediction.category
-                formatted_result = {
-                    'class_id': int(category.id),
-                    'xmin': bbox.minx,
-                    'ymin': bbox.miny,
-                    'xmax': bbox.maxx,
-                    'ymax': bbox.maxy
-                }
-                formatted_results.append(formatted_result)
-            return formatted_results
-        else:
-            return results
 
     def apply_transformations(self, frame):
         """
