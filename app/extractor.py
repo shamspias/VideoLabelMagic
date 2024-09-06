@@ -77,7 +77,7 @@ class VideoFrameExtractor:
                     else:
                         results = self.yolo_model.predict(transformed_image, conf=model_confidence, verbose=False)
 
-                    print(results)
+                    # print(results)
 
                     self.output_format.save_annotations(transformed_image, frame_path, frame_filename,
                                                         results,
