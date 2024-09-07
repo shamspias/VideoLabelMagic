@@ -1,17 +1,19 @@
 from sahi.predict import get_sliced_prediction
+from sahi.utils.cv import read_image_as_pil
 from sahi import AutoDetectionModel
 import numpy as np
 
 
 class SahiUtils:
     def __init__(self, model_path, model_type='yolov8', device='cpu', slice_size=(256, 256), overlap_ratio=(0.2, 0.2)):
-        self.device = device  # CPU or 'cuda:0'
+        self.device = device  # Can be 'cpu' or 'cuda:0' for GPU
         self.model_type = model_type
         self.model = self.load_model(model_path)
         self.slice_size = slice_size
         self.overlap_ratio = overlap_ratio
 
     def load_model(self, model_path):
+        """Loads a detection model based on the specified type and path."""
         detection_model = AutoDetectionModel.from_pretrained(
             model_type=self.model_type,
             model_path=model_path,
@@ -21,40 +23,29 @@ class SahiUtils:
         return detection_model
 
     def perform_sliced_inference(self, image):
+        """Performs object detection on an image using sliced prediction."""
+        pil_image = read_image_as_pil(image)
         results = get_sliced_prediction(
-            image,
-            self.model,  # this should be a sahi model
+            pil_image,
+            detection_model=self.model,
             slice_height=self.slice_size[0],
             slice_width=self.slice_size[1],
             overlap_height_ratio=self.overlap_ratio[0],
             overlap_width_ratio=self.overlap_ratio[1],
             verbose=False
         )
-        return self.format_predictions(results, image)
+        return self.format_predictions(results)
 
-    def format_predictions(self, prediction_result, image):
-        formatted_results = {"boxes": [], "names": {}, "orig_img": image, "orig_shape": image.shape, "path": "",
-                             "probs": None, "save_dir": None, "speed": None}
-        class_ids = set()
+    def format_predictions(self, prediction_result):
+        """Formats the predictions into a compatible format with YOLO output."""
+        formatted_results = {'boxes': []}
         for prediction in prediction_result.object_prediction_list:
-            class_id = prediction.category.id
-            class_ids.add(class_id)
-            formatted_results["names"][class_id] = prediction.category.name
-            bbox_xyxy = [prediction.bbox.minx, prediction.bbox.miny, prediction.bbox.maxx, prediction.bbox.maxy]
-            formatted_results["boxes"].append({
-                "class_id": class_id,
-                "bbox": np.array(bbox_xyxy),
-                "score": prediction.score.value
-            })
+            box = prediction.bbox.to_voc_bbox()
+            formatted_result = {
+                'cls': [prediction.category.id],  # list wrapping for compatibility
+                'conf': [prediction.score.value],  # list wrapping for compatibility
+                'xyxy': [np.array([box[0], box[1], box[2], box[3]])],  # VOC format to numpy array
+            }
+            formatted_results['boxes'].append(formatted_result)
 
-        formatted_results["boxes"] = self.convert_boxes(formatted_results["boxes"])
         return formatted_results
-
-    def convert_boxes(self, boxes):
-        # Convert to ultralytics.engine.results.Boxes format or similar
-        # Ensure correct shape and concatenation of score and class_id
-        boxes_array = [np.concatenate([box["bbox"], [box["score"], box["class_id"]]]) for box in boxes]
-        if boxes_array:  # Check if list is not empty
-            return np.stack(boxes_array)  # Properly stack arrays to maintain structure
-        else:
-            return np.array([])  # Return an empty numpy array if no boxes
