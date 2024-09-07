@@ -11,8 +11,8 @@ class CVATFormat(BaseFormat):
         output_dir (str): Base directory for all output.
     """
 
-    def __init__(self, output_dir):
-        super().__init__(output_dir)
+    def __init__(self, output_dir, sahi_enabled):
+        super().__init__(output_dir, sahi_enabled)
         self.data_dir = os.path.join(output_dir, 'data')
         self.image_dir = os.path.join(self.data_dir, 'obj_train_data')
         os.makedirs(self.image_dir, exist_ok=True)
