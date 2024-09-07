@@ -134,7 +134,8 @@ class VideoLabelApp:
         class_config_path = os.path.join(self.config.object_class_directory, self.class_config_selection)
         specific_output_dir = os.path.join(self.config.output_directory, unique_filename)
         os.makedirs(specific_output_dir, exist_ok=True)
-        output_format_instance = self.format_options[self.format_selection](specific_output_dir)
+        output_format_instance = self.format_options[self.format_selection](output_dir=specific_output_dir,
+                                                                            sahi_enabled=self.sahi_enabled)
 
         extractor = VideoFrameExtractor(self.config, video_path, self.frame_rate, specific_output_dir,
                                         self.model_selection, class_config_path, output_format_instance,
