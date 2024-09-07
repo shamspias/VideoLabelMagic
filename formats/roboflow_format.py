@@ -4,8 +4,8 @@ import yaml
 
 
 class RoboflowFormat(BaseFormat):
-    def __init__(self, output_dir):
-        super().__init__(output_dir)
+    def __init__(self, output_dir, sahi_enabled):
+        super().__init__(output_dir, sahi_enabled)
         self.image_dir = os.path.join(output_dir, 'images')
         self.label_dir = os.path.join(output_dir, 'labels')
         os.makedirs(self.image_dir, exist_ok=True)
