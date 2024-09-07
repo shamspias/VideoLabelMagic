@@ -39,35 +39,31 @@ class BaseFormat:
         """Generate formatted strings from detection results."""
         annotations = []
         img_height, img_width = img_dimensions
-        for result in results:
-            if hasattr(result, 'boxes') and result.boxes is not None:
-                for box in result.boxes:
-                    class_id = int(box.cls[0])
-                    xmin, ymin, xmax, ymax = box.xyxy[0]
-                    x_center = ((xmin + xmax) / 2) / img_width
-                    y_center = ((ymin + ymax) / 2) / img_height
-                    width = (xmax - xmin) / img_width
-                    height = (ymax - ymin) / img_height
-                    annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
-        return annotations
+        if self.sahi_enabled:
+            for box in results['boxes']:
+                class_id = int(box['cls'][0])
+                xmin, ymin, xmax, ymax = box['xyxy'][0]
+                x_center = ((xmin + xmax) / 2) / img_width
+                y_center = ((ymin + ymax) / 2) / img_height
+                width = (xmax - xmin) / img_width
+                height = (ymax - ymin) / img_height
+                print(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+                annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+            return annotations
+        else:
+            for result in results:
+                if hasattr(result, 'boxes') and result.boxes is not None:
+                    for box in result.boxes:
+                        class_id = int(box.cls[0])
+                        xmin, ymin, xmax, ymax = box.xyxy[0]
+                        x_center = ((xmin + xmax) / 2) / img_width
+                        y_center = ((ymin + ymax) / 2) / img_height
+                        width = (xmax - xmin) / img_width
+                        height = (ymax - ymin) / img_height
+                        annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+            return annotations
 
     def save_annotations(self, frame, frame_path: str, frame_filename: str, results: list, supported_classes: list):
-        """
-        Saves the annotations for a given frame. If SAHI is enabled, performs sliced inference before saving.
-
-        Args:
-            frame (ndarray): The image frame for which annotations are being saved.
-            frame_path (str): The path where the frame is located.
-            frame_filename (str): The name of the frame file.
-            results (list): A list of results from the detection model or sliced inference.
-            supported_classes (list): List of supported class labels for the annotations.
-
-        Raises:
-            NotImplementedError: If `_save_annotations` is not implemented in the subclass.
-        """
-        self._save_annotations(frame, frame_path, frame_filename, results, supported_classes)
-
-    def _save_annotations(self, frame, frame_path: str, frame_filename: str, results: list, supported_classes: list):
         """
         Abstract method for saving annotations. To be implemented by subclasses to define
         the logic for saving the annotations.
