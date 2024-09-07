@@ -35,6 +35,22 @@ class BaseFormat:
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
+    def process_results(self, frame, results, img_dimensions):
+        """Generate formatted strings from detection results."""
+        annotations = []
+        img_height, img_width = img_dimensions
+        for result in results:
+            if hasattr(result, 'boxes') and result.boxes is not None:
+                for box in result.boxes:
+                    class_id = int(box.cls[0])
+                    xmin, ymin, xmax, ymax = box.xyxy[0]
+                    x_center = ((xmin + xmax) / 2) / img_width
+                    y_center = ((ymin + ymax) / 2) / img_height
+                    width = (xmax - xmin) / img_width
+                    height = (ymax - ymin) / img_height
+                    annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+        return annotations
+
     def save_annotations(self, frame, frame_path: str, frame_filename: str, results: list, supported_classes: list):
         """
         Saves the annotations for a given frame. If SAHI is enabled, performs sliced inference before saving.
@@ -49,11 +65,6 @@ class BaseFormat:
         Raises:
             NotImplementedError: If `_save_annotations` is not implemented in the subclass.
         """
-        # if self.sahi_enabled and self.sahi_utils:
-        #     if hasattr(self.sahi_utils, 'perform_sliced_inference'):
-        #         results = self.sahi_utils.perform_sliced_inference(frame)
-        #     else:
-        #         raise AttributeError("sahi_utils object does not have 'perform_sliced_inference' method.")
         self._save_annotations(frame, frame_path, frame_filename, results, supported_classes)
 
     def _save_annotations(self, frame, frame_path: str, frame_filename: str, results: list, supported_classes: list):
