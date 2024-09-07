@@ -107,51 +107,30 @@ class VideoLabelApp:
         # Proceed to run the extraction process
         self.run_extraction(video_path, unique_filename)
 
-    # def run_extraction(self, video_path, unique_filename):
-    #     class_config_path = os.path.join(self.config.object_class_directory, self.class_config_selection)
-    #     specific_output_dir = os.path.join(self.config.output_directory, unique_filename)
-    #     os.makedirs(specific_output_dir, exist_ok=True)
-    #     output_format_instance = self.format_options[self.format_selection](specific_output_dir)
-    #     try:
-    #         extractor = VideoFrameExtractor(self.config, video_path, self.frame_rate, specific_output_dir,
-    #                                         self.model_selection, class_config_path, output_format_instance,
-    #                                         self.transformations, self.sahi_config)
-    #         extractor.extract_frames(self.model_confidence)
-    #         if self.format_selection == "CVAT":
-    #             output_format_instance.zip_and_cleanup()
-    #         if self.storage_option == 'Object Storage':
-    #             self.upload_outputs(specific_output_dir)
-    #
-    #         # Clean up: Remove the temporary video file after processing
-    #         if os.path.exists(video_path):
-    #             os.remove(video_path)
-    #             print(f"Deleted temporary video file: {video_path}")
-    #
-    #         st.success('Extraction Completed!')
-    #     except Exception as e:
-    #         st.error(f"An error occurred during frame extraction: {str(e)}")
     def run_extraction(self, video_path, unique_filename):
         class_config_path = os.path.join(self.config.object_class_directory, self.class_config_selection)
         specific_output_dir = os.path.join(self.config.output_directory, unique_filename)
         os.makedirs(specific_output_dir, exist_ok=True)
         output_format_instance = self.format_options[self.format_selection](output_dir=specific_output_dir,
                                                                             sahi_enabled=self.sahi_enabled)
+        try:
+            extractor = VideoFrameExtractor(self.config, video_path, self.frame_rate, specific_output_dir,
+                                            self.model_selection, class_config_path, output_format_instance,
+                                            self.transformations, self.sahi_config)
+            extractor.extract_frames(self.model_confidence)
+            if self.format_selection == "CVAT":
+                output_format_instance.zip_and_cleanup()
+            if self.storage_option == 'Object Storage':
+                self.upload_outputs(specific_output_dir)
 
-        extractor = VideoFrameExtractor(self.config, video_path, self.frame_rate, specific_output_dir,
-                                        self.model_selection, class_config_path, output_format_instance,
-                                        self.transformations, self.sahi_config)
-        extractor.extract_frames(self.model_confidence)
-        if self.format_selection == "CVAT":
-            output_format_instance.zip_and_cleanup()
-        if self.storage_option == 'Object Storage':
-            self.upload_outputs(specific_output_dir)
+            # Clean up: Remove the temporary video file after processing
+            if os.path.exists(video_path):
+                os.remove(video_path)
+                print(f"Deleted temporary video file: {video_path}")
 
-        # Clean up: Remove the temporary video file after processing
-        if os.path.exists(video_path):
-            os.remove(video_path)
-            print(f"Deleted temporary video file: {video_path}")
-
-        st.success('Extraction Completed!')
+            st.success('Extraction Completed!')
+        except Exception as e:
+            st.error(f"An error occurred during frame extraction: {str(e)}")
 
     def upload_outputs(self, directory):
         """
