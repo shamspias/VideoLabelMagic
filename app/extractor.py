@@ -27,7 +27,7 @@ class VideoFrameExtractor:
 
         # Only initialize SahiUtils if SAHI is enabled
         if sahi_config:
-            self.sahi_utils = SahiUtils(os.path.join('models', model_path), **sahi_config)
+            self.sahi_utils = SahiUtils(self.config.debug, os.path.join('models', model_path), **sahi_config)
         else:
             self.sahi_utils = None
 
