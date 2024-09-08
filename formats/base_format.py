@@ -1,4 +1,3 @@
-import os
 from typing import Optional, List, Dict
 
 
@@ -25,6 +24,16 @@ class BaseFormat:
         self.output_dir = output_dir
         self.sahi_enabled = sahi_enabled
         self.sahi_utils = sahi_utils
+
+    def write_annotations(self, frame_filename: str, annotations: List[str]):
+        """
+        Writes annotations to a file based on the frame filename.
+
+        Args:
+            frame_filename (str): The filename of the frame to which annotations relate.
+            annotations (List[str]): Annotations to be written to the file.
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
 
     def ensure_directories(self):
         """
@@ -74,20 +83,6 @@ class BaseFormat:
                         annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
 
         return annotations
-
-    def write_annotations(self, frame_filename: str, annotations: List[str]):
-        """
-        Writes annotations to a file based on the frame filename.
-
-        Args:
-            frame_filename (str): The filename of the frame to which annotations relate.
-            annotations (List[str]): Annotations to be written to the file.
-        """
-        annotation_filename = frame_filename.replace('.jpg', '.txt')
-        annotation_path = os.path.join(self.output_dir, 'labels', annotation_filename)
-        with open(annotation_path, 'w') as file:
-            for annotation in annotations:
-                file.write(annotation + "\n")
 
     def save_annotations(self, frame, frame_path: str, frame_filename: str, results: Dict,
                          supported_classes: List[str]):
