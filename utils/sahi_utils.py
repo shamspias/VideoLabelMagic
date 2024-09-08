@@ -1,9 +1,13 @@
 import cv2
+import uuid
+import time
+import os
 from sahi import AutoDetectionModel
 from sahi.predict import get_sliced_prediction
 from sahi.utils.cv import read_image_as_pil
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 
 
 class SahiUtils:
@@ -15,6 +19,7 @@ class SahiUtils:
         self.model = self.load_model(model_path)
         self.slice_size = slice_size
         self.overlap_ratio = overlap_ratio
+        self.debug_annotated_directory = 0
 
     def load_model(self, model_path):
         """Loads a detection model based on the specified type and path."""
@@ -37,6 +42,12 @@ class SahiUtils:
         plt.axis('off')  # Hide axes
         plt.show()
 
+    def show_annotated_image(self, image_path):
+        img = Image.open(image_path)
+        plt.imshow(img)
+        plt.axis('off')
+        plt.show()
+
     def perform_sliced_inference(self, image):
         """Performs object detection on an image using sliced prediction."""
         pil_image = read_image_as_pil(image)
@@ -50,7 +61,22 @@ class SahiUtils:
             verbose=False
         )
         if self.debug:
-            self.show_image(image)
+            random_value = str(uuid.uuid4())
+            # Start exporting the image
+            results.export_visuals(export_dir=f"temp/{str(self.debug_annotated_directory)}/", file_name=random_value)
+
+            # Wait until the file is created
+            file_path = f"temp/{str(self.debug_annotated_directory)}/{random_value}.png"
+            timeout = 10  # Set a timeout limit of 10 seconds or more if necessary
+            start_time = time.time()
+
+            while not os.path.exists(file_path):
+                if time.time() - start_time > timeout:
+                    raise TimeoutError(f"File creation exceeded {timeout} seconds.")
+                time.sleep(0.1)  # Wait for 100 milliseconds before checking again
+
+            # Once the file exists, display it
+            self.show_annotated_image(file_path)
 
         return self.format_predictions(results)
 
