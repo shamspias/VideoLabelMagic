@@ -19,7 +19,7 @@ class SahiUtils:
         self.model = self.load_model(model_path)
         self.slice_size = slice_size
         self.overlap_ratio = overlap_ratio
-        self.debug_annotated_directory = 0
+        self.debug_annotated_directory = str(uuid.uuid4())
 
     def load_model(self, model_path):
         """Loads a detection model based on the specified type and path."""
@@ -63,10 +63,10 @@ class SahiUtils:
         if self.debug:
             random_value = str(uuid.uuid4())
             # Start exporting the image
-            results.export_visuals(export_dir=f"temp/{str(self.debug_annotated_directory)}/", file_name=random_value)
+            results.export_visuals(export_dir=f"temp/{self.debug_annotated_directory}/", file_name=random_value)
 
             # Wait until the file is created
-            file_path = f"temp/{str(self.debug_annotated_directory)}/{random_value}.png"
+            file_path = f"temp/{self.debug_annotated_directory}/{random_value}.png"
             timeout = 10  # Set a timeout limit of 10 seconds or more if necessary
             start_time = time.time()
 
