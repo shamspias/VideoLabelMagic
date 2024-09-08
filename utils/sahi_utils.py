@@ -1,11 +1,15 @@
+import cv2
+from sahi import AutoDetectionModel
 from sahi.predict import get_sliced_prediction
 from sahi.utils.cv import read_image_as_pil
-from sahi import AutoDetectionModel
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class SahiUtils:
-    def __init__(self, model_path, model_type='yolov8', device='cpu', slice_size=(256, 256), overlap_ratio=(0.2, 0.2)):
+    def __init__(self, debug, model_path, model_type='yolov8', device='cpu', slice_size=(256, 256),
+                 overlap_ratio=(0.2, 0.2)):
+        self.debug = debug
         self.device = device  # Can be 'cpu' or 'cuda:0' for GPU
         self.model_type = model_type
         self.model = self.load_model(model_path)
@@ -22,6 +26,17 @@ class SahiUtils:
         )
         return detection_model
 
+    def show_image(self, image, title="Image"):
+        """Displays a NumPy image using matplotlib."""
+        # Convert BGR to RGB for correct color
+        plt.imshow(image if len(image.shape) == 2 else cv2.cvtColor(
+            image,
+            cv2.COLOR_BGR2RGB
+        ))
+        plt.title(title)
+        plt.axis('off')  # Hide axes
+        plt.show()
+
     def perform_sliced_inference(self, image):
         """Performs object detection on an image using sliced prediction."""
         pil_image = read_image_as_pil(image)
@@ -34,6 +49,9 @@ class SahiUtils:
             overlap_width_ratio=self.overlap_ratio[1],
             verbose=False
         )
+        if self.debug:
+            self.show_image(image)
+
         return self.format_predictions(results)
 
     def format_predictions(self, prediction_result):
