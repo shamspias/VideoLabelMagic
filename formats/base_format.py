@@ -1,13 +1,13 @@
-from typing import Optional
+from typing import Optional, List, Dict
 
 
 class BaseFormat:
     """
-    Base class for handling annotation formats. This class provides basic functionalities
-    like saving annotations and ensuring directory structure, which can be extended by subclasses.
+    Base class for handling annotation formats. Provides foundational functionalities
+    like saving annotations and ensuring directory structure, designed for extension by subclasses.
 
     Attributes:
-        output_dir (str): The directory where the output will be stored.
+        output_dir (str): Directory where output will be stored.
         sahi_enabled (bool): Flag to enable or disable SAHI (Sliced Inference).
         sahi_utils (Optional[object]): SAHI utility object for performing sliced inference.
     """
@@ -25,9 +25,19 @@ class BaseFormat:
         self.sahi_enabled = sahi_enabled
         self.sahi_utils = sahi_utils
 
+    def write_annotations(self, frame_filename: str, annotations: List[str]):
+        """
+        Writes annotations to a file based on the frame filename.
+
+        Args:
+            frame_filename (str): The filename of the frame to which annotations relate.
+            annotations (List[str]): Annotations to be written to the file.
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
+
     def ensure_directories(self):
         """
-        Ensures that the necessary directories for saving annotations exist.
+        Ensures that necessary directories for saving annotations exist.
         Must be implemented by subclasses.
 
         Raises:
@@ -35,28 +45,47 @@ class BaseFormat:
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def save_annotations(self, frame, frame_path: str, frame_filename: str, results: list, supported_classes: list):
+    def process_results(self, frame, results: Dict, img_dimensions) -> List[str]:
         """
-        Saves the annotations for a given frame. If SAHI is enabled, performs sliced inference before saving.
+        Generate formatted strings from detection results suitable for annotations.
 
         Args:
-            frame (ndarray): The image frame for which annotations are being saved.
-            frame_path (str): The path where the frame is located.
-            frame_filename (str): The name of the frame file.
-            results (list): A list of results from the detection model or sliced inference.
-            supported_classes (list): List of supported class labels for the annotations.
+            frame: The image frame being processed.
+            results: Detection results containing bounding boxes and class IDs.
+            img_dimensions: Dimensions of the image for normalizing coordinates.
 
-        Raises:
-            NotImplementedError: If `_save_annotations` is not implemented in the subclass.
+        Returns:
+            List of annotation strings formatted according to specific requirements.
         """
-        if self.sahi_enabled and self.sahi_utils:
-            if hasattr(self.sahi_utils, 'perform_sliced_inference'):
-                results = self.sahi_utils.perform_sliced_inference(frame)
-            else:
-                raise AttributeError("sahi_utils object does not have 'perform_sliced_inference' method.")
-        self._save_annotations(frame, frame_path, frame_filename, results, supported_classes)
+        annotations = []
+        img_height, img_width = img_dimensions
 
-    def _save_annotations(self, frame, frame_path: str, frame_filename: str, results: list, supported_classes: list):
+        # Check if SAHI is enabled to adapt processing of results accordingly
+        if self.sahi_enabled:
+            for box in results['boxes']:  # Assuming SAHI results are formatted similarly
+                class_id = int(box['cls'][0])
+                xmin, ymin, xmax, ymax = box['xyxy'][0]
+                x_center = ((xmin + xmax) / 2) / img_width
+                y_center = ((ymin + ymax) / 2) / img_height
+                width = (xmax - xmin) / img_width
+                height = (ymax - ymin) / img_height
+                annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+        else:
+            for result in results:
+                if hasattr(result, 'boxes') and result.boxes is not None:
+                    for box in result.boxes:
+                        class_id = int(box.cls[0])
+                        xmin, ymin, xmax, ymax = box.xyxy[0]
+                        x_center = ((xmin + xmax) / 2) / img_width
+                        y_center = ((ymin + ymax) / 2) / img_height
+                        width = (xmax - xmin) / img_width
+                        height = (ymax - ymin) / img_height
+                        annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+
+        return annotations
+
+    def save_annotations(self, frame, frame_path: str, frame_filename: str, results: Dict,
+                         supported_classes: List[str]):
         """
         Abstract method for saving annotations. To be implemented by subclasses to define
         the logic for saving the annotations.
@@ -65,8 +94,8 @@ class BaseFormat:
             frame (ndarray): The image frame for which annotations are being saved.
             frame_path (str): The path where the frame is located.
             frame_filename (str): The name of the frame file.
-            results (list): A list of results from the detection model or sliced inference.
-            supported_classes (list): List of supported class labels for the annotations.
+            results (Dict): A dictionary of results from the detection model or sliced inference.
+            supported_classes (List[str]): List of supported class labels for the annotations.
 
         Raises:
             NotImplementedError: If the method is not implemented in the subclass.

@@ -58,7 +58,7 @@ class VideoLabelApp:
             self.config.sahi_model_type = st.sidebar.selectbox("Model Architecture:", ["yolov8", "yolov9", "yolov10"])
             self.config.sahi_device = st.sidebar.selectbox("Device:", ["cpu"])
             self.config.sahi_slice_size = st.sidebar.slider("SAHI slice size:", 128, 512, (256, 256))
-            self.config.sahi_overlap_ratio = st.sidebar.slider("SAHI overlap ratio:", 0.1, 0.5, 0.2)
+            self.config.sahi_overlap_ratio = st.sidebar.slider("SAHI overlap ratio:", 0.1, 0.5, (0.2, 0.2))
             self.sahi_config = {
                 'model_type': self.config.sahi_model_type,
                 'slice_size': self.config.sahi_slice_size,
@@ -111,7 +111,8 @@ class VideoLabelApp:
         class_config_path = os.path.join(self.config.object_class_directory, self.class_config_selection)
         specific_output_dir = os.path.join(self.config.output_directory, unique_filename)
         os.makedirs(specific_output_dir, exist_ok=True)
-        output_format_instance = self.format_options[self.format_selection](specific_output_dir)
+        output_format_instance = self.format_options[self.format_selection](output_dir=specific_output_dir,
+                                                                            sahi_enabled=self.sahi_enabled)
         try:
             extractor = VideoFrameExtractor(self.config, video_path, self.frame_rate, specific_output_dir,
                                             self.model_selection, class_config_path, output_format_instance,
