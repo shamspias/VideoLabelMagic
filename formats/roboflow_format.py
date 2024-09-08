@@ -14,11 +14,7 @@ class RoboflowFormat(BaseFormat):
     def save_annotations(self, frame, frame_path, frame_filename, results, supported_classes):
         img_dimensions = frame.shape[:2]
         annotations = self.process_results(frame, results, img_dimensions)
-        annotation_filename = frame_filename.replace('.jpg', '.txt')
-        annotation_path = os.path.join(self.label_dir, annotation_filename)
-        with open(annotation_path, 'w') as f:
-            for annotation in annotations:
-                f.write(annotation + "\n")
+        self.write_annotations(frame_filename, annotations)
         self.create_data_yaml(supported_classes)
 
     def create_data_yaml(self, supported_classes):
