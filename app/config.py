@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 
 class Config(BaseSettings):
     streamlit_title: Optional[str] = "VideoLabelMagic"
+    debug: Optional[bool] = False
     models_directory: Optional[str] = "models/"
     output_directory: Optional[str] = "outputs/"
     object_class_directory: Optional[str] = "object_class/"
