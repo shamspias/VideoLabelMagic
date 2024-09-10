@@ -17,17 +17,18 @@ class CVATFormat(BaseFormat):
         self.image_dir = os.path.join(self.data_dir, 'obj_train_data')
         os.makedirs(self.image_dir, exist_ok=True)
 
-    def save_annotations(self, frame, frame_path: str, frame_filename: str, results, supported_classes: List[str]):
+    def save_annotations(self, frame, frame_path: str, frame_filename: str, results, supported_classes_names: List[str],
+                         supported_classes_ids: List[str]):
         """
         Saves annotations and frames in a format compatible with CVAT.
         """
         img_dimensions = frame.shape[:2]
-        annotations = self.process_results(frame, results, img_dimensions)
+        annotations = self.process_results(results, img_dimensions, supported_classes_ids)
         frame_filename_png = frame_filename.replace('.jpg', '.png')
         image_path = os.path.join(self.image_dir, frame_filename_png)
         cv2.imwrite(image_path, frame)
         self.write_annotations(frame_filename_png, annotations)
-        self.create_metadata_files(supported_classes)
+        self.create_metadata_files(supported_classes_names)
 
     def write_annotations(self, frame_filename: str, annotations: List[str]):
         """
