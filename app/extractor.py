@@ -22,7 +22,8 @@ class VideoFrameExtractor:
         self.class_config_path = class_config_path
         self.output_format = output_format
         self.transformations = transformations
-        self.supported_classes = self.load_classes(self.class_config_path)
+        self.supported_classes_names = self.load_classes_names(self.class_config_path)
+        self.supported_classes_ids = self.load_classes_ids(self.class_config_path)
         self.image_processor = ImageProcessor(output_size=self.transformations.get('size', (640, 640)))
 
         # Only initialize SahiUtils if SAHI is enabled
@@ -48,7 +49,7 @@ class VideoFrameExtractor:
         except Exception as e:
             raise ValueError(f"Model architecture and Model not Matching:  {str(e)}")
 
-    def load_classes(self, config_path):
+    def load_classes_names(self, config_path):
         """
         Load classes from a YAML configuration file.
         """
@@ -57,6 +58,16 @@ class VideoFrameExtractor:
         with open(config_path, 'r') as file:
             class_data = yaml.safe_load(file)
         return [cls['name'] for cls in class_data['classes']]
+
+    def load_classes_ids(self, config_path):
+        """
+        Load classes from a YAML configuration file.
+        """
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Configuration file not found at {config_path}")
+        with open(config_path, 'r') as file:
+            class_data = yaml.safe_load(file)
+        return [cls['id'] for cls in class_data['classes']]
 
     def extract_frames(self, model_confidence):
         cap = cv2.VideoCapture(self.video_path)
@@ -96,7 +107,7 @@ class VideoFrameExtractor:
 
                     self.output_format.save_annotations(transformed_image, frame_path, frame_filename,
                                                         results,
-                                                        self.supported_classes)
+                                                        self.supported_classes_names, self.supported_classes_ids)
 
             frame_count += 1
 
