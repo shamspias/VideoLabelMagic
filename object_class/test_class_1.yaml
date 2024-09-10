@@ -1,0 +1,7 @@
+classes:
+  - id: 0
+    name: person
+  - id: 2
+    name: car
+  - id: 7
+    name: truck
