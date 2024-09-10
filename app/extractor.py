@@ -25,6 +25,7 @@ class VideoFrameExtractor:
 
         self.supported_classes_names = self.load_classes_names(self.class_config_path)
         self.supported_classes_ids = self.load_classes_ids(self.class_config_path)
+        self.supported_classes_map = self.load_classes_category_map(self.class_config_path)
 
         self.vision_model = self.get_given_model(model_path, model_types)
 
@@ -32,7 +33,8 @@ class VideoFrameExtractor:
 
         # Only initialize SahiUtils if SAHI is enabled
         if sahi_config:
-            self.sahi_utils = SahiUtils(self.config.debug, os.path.join('models', model_path), **sahi_config)
+            self.sahi_utils = SahiUtils(self.config.debug, self.supported_classes_map,
+                                        self.vision_model, **sahi_config)
         else:
             self.sahi_utils = None
 
@@ -68,13 +70,26 @@ class VideoFrameExtractor:
 
     def load_classes_ids(self, config_path):
         """
-        Load classes from a YAML configuration file.
+        Load classes id from a YAML configuration file.
         """
         if not os.path.exists(config_path):
             raise FileNotFoundError(f"Configuration file not found at {config_path}")
         with open(config_path, 'r') as file:
             class_data = yaml.safe_load(file)
         return [cls['id'] for cls in class_data['classes']]
+
+    def load_classes_category_map(self, config_path):
+        """
+        Load a mapping of class names to class ids from a YAML configuration file.
+        Returns a dictionary where the key is the class name (string) and the value is the class id (string).
+        """
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Configuration file not found at {config_path}")
+        with open(config_path, 'r') as file:
+            class_data = yaml.safe_load(file)
+
+        # Create a dictionary with 'name' as key and 'id' as value, both converted to string
+        return {str(cls['id']): str(cls['name']) for cls in class_data['classes']}
 
     def extract_frames(self, model_confidence):
         cap = cv2.VideoCapture(self.video_path)
