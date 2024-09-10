@@ -86,7 +86,11 @@ class VideoFrameExtractor:
                     if self.sahi_utils:
                         results = self.sahi_utils.perform_sliced_inference(transformed_image)
                     else:
-                        results = self.vision_model.predict(transformed_image, conf=model_confidence, verbose=False)
+                        if self.config.debug:
+                            results = self.vision_model.predict(transformed_image, conf=model_confidence, verbose=False)
+                            # will add image show later time
+                        else:
+                            results = self.vision_model.predict(transformed_image, conf=model_confidence, verbose=False)
 
                     # print(results)
 
