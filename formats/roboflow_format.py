@@ -28,7 +28,7 @@ class RoboflowFormat(BaseFormat):
 
     def save_annotations(self, frame, frame_path, frame_filename, results, supported_classes):
         img_dimensions = frame.shape[:2]
-        annotations = self.process_results(frame, results, img_dimensions)
+        annotations = self.process_results(results, img_dimensions, supported_classes)
         self.write_annotations(frame_filename, annotations)
         self.create_data_yaml(supported_classes)
 
