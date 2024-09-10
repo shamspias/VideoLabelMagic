@@ -11,9 +11,15 @@ from PIL import Image
 
 
 class SahiUtils:
-    def __init__(self, debug, model_path, model_type='yolov8', device='cpu', slice_size=(256, 256),
+    def __init__(self, debug,
+                 supported_classes_map,
+                 model_path,
+                 model_type='yolov8',
+                 device='cpu',
+                 slice_size=(256, 256),
                  overlap_ratio=(0.2, 0.2)):
         self.debug = debug
+        self.supported_classes_map = supported_classes_map
         self.device = device  # Can be 'cpu' or 'cuda:0' for GPU
         self.model_type = model_type
         self.model = self.load_model(model_path)
@@ -23,11 +29,14 @@ class SahiUtils:
 
     def load_model(self, model_path):
         """Loads a detection model based on the specified type and path."""
+        # print(self.supported_classes_map)
         detection_model = AutoDetectionModel.from_pretrained(
             model_type=self.model_type,
-            model_path=model_path,
+            model=model_path,
             confidence_threshold=0.1,
             device=self.device,
+            # category_mapping=self.supported_classes_map,
+            # category_remapping=self.supported_classes_map,
         )
         return detection_model
 
@@ -58,6 +67,7 @@ class SahiUtils:
             slice_width=self.slice_size[1],
             overlap_height_ratio=self.overlap_ratio[0],
             overlap_width_ratio=self.overlap_ratio[1],
+            postprocess_class_agnostic=True,
             verbose=False
         )
         if self.debug:
