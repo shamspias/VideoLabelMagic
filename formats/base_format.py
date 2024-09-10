@@ -45,7 +45,7 @@ class BaseFormat:
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def process_results(self, frame, results: Dict, img_dimensions) -> List[str]:
+    def process_results(self, results: Dict, img_dimensions, supported_classes) -> List[str]:
         """
         Generate formatted strings from detection results suitable for annotations.
 
