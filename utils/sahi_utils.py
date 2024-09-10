@@ -29,13 +29,14 @@ class SahiUtils:
 
     def load_model(self, model_path):
         """Loads a detection model based on the specified type and path."""
-        print(self.supported_classes_map)
+        # print(self.supported_classes_map)
         detection_model = AutoDetectionModel.from_pretrained(
             model_type=self.model_type,
             model=model_path,
             confidence_threshold=0.1,
             device=self.device,
             # category_mapping=self.supported_classes_map,
+            # category_remapping=self.supported_classes_map,
         )
         return detection_model
 
