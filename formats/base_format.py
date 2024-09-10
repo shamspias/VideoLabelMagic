@@ -50,9 +50,10 @@ class BaseFormat:
         Generate formatted strings from detection results suitable for annotations.
 
         Args:
-            frame: The image frame being processed.
+            # frame: The image frame being processed.
             results: Detection results containing bounding boxes and class IDs.
             img_dimensions: Dimensions of the image for normalizing coordinates.
+            supported_classes: List of supported class
 
         Returns:
             List of annotation strings formatted according to specific requirements.
@@ -64,28 +65,30 @@ class BaseFormat:
         if self.sahi_enabled:
             for box in results['boxes']:  # Assuming SAHI results are formatted similarly
                 class_id = int(box['cls'][0])
-                xmin, ymin, xmax, ymax = box['xyxy'][0]
-                x_center = ((xmin + xmax) / 2) / img_width
-                y_center = ((ymin + ymax) / 2) / img_height
-                width = (xmax - xmin) / img_width
-                height = (ymax - ymin) / img_height
-                annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+                if class_id in supported_classes:  # Check if class_id is in the list of supported classes
+                    xmin, ymin, xmax, ymax = box['xyxy'][0]
+                    x_center = ((xmin + xmax) / 2) / img_width
+                    y_center = ((ymin + ymax) / 2) / img_height
+                    width = (xmax - xmin) / img_width
+                    height = (ymax - ymin) / img_height
+                    annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
         else:
             for result in results:
                 if hasattr(result, 'boxes') and result.boxes is not None:
                     for box in result.boxes:
                         class_id = int(box.cls[0])
-                        xmin, ymin, xmax, ymax = box.xyxy[0]
-                        x_center = ((xmin + xmax) / 2) / img_width
-                        y_center = ((ymin + ymax) / 2) / img_height
-                        width = (xmax - xmin) / img_width
-                        height = (ymax - ymin) / img_height
-                        annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+                        if class_id in supported_classes:  # Check if class_id is in the list of supported classes
+                            xmin, ymin, xmax, ymax = box.xyxy[0]
+                            x_center = ((xmin + xmax) / 2) / img_width
+                            y_center = ((ymin + ymax) / 2) / img_height
+                            width = (xmax - xmin) / img_width
+                            height = (ymax - ymin) / img_height
+                            annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
 
         return annotations
 
     def save_annotations(self, frame, frame_path: str, frame_filename: str, results: Dict,
-                         supported_classes: List[str]):
+                         supported_classes_names: List[str], supported_classes_ids: List[str]):
         """
         Abstract method for saving annotations. To be implemented by subclasses to define
         the logic for saving the annotations.
@@ -95,7 +98,8 @@ class BaseFormat:
             frame_path (str): The path where the frame is located.
             frame_filename (str): The name of the frame file.
             results (Dict): A dictionary of results from the detection model or sliced inference.
-            supported_classes (List[str]): List of supported class labels for the annotations.
+            supported_classes_names (List[str]): List of supported class labels names for the annotations.
+            supported_classes_ids (List[str]): List of supported class labels ids for the annotations.
 
         Raises:
             NotImplementedError: If the method is not implemented in the subclass.
