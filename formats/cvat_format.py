@@ -22,7 +22,7 @@ class CVATFormat(BaseFormat):
         Saves annotations and frames in a format compatible with CVAT.
         """
         img_dimensions = frame.shape[:2]
-        annotations = self.process_results(frame, results, img_dimensions)
+        annotations = self.process_results(results, img_dimensions, supported_classes)
         frame_filename_png = frame_filename.replace('.jpg', '.png')
         image_path = os.path.join(self.image_dir, frame_filename_png)
         cv2.imwrite(image_path, frame)
