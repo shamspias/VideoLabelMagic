@@ -1,6 +1,6 @@
 import cv2
 import os
-from ultralytics import YOLO
+from ultralytics import YOLO, RTDETR, NAS
 import yaml
 from utils.image_processor import ImageProcessor
 from utils.sahi_utils import SahiUtils
@@ -13,12 +13,12 @@ class VideoFrameExtractor:
     """
 
     def __init__(self, config, video_path, frame_rate, output_dir, model_path, class_config_path, output_format,
-                 transformations, sahi_config=None):
+                 transformations, model_types, sahi_config=None):
         self.config = config
         self.video_path = video_path  # Ensure this is a string representing the path to the video file.
         self.frame_rate = frame_rate
         self.output_dir = output_dir
-        self.yolo_model = YOLO(os.path.join('models', model_path))
+        self.vision_model = self.get_given_model(model_path, model_types)
         self.class_config_path = class_config_path
         self.output_format = output_format
         self.transformations = transformations
@@ -36,6 +36,17 @@ class VideoFrameExtractor:
             raise FileNotFoundError(f"The specified video file was not found at {self.video_path}")
         else:
             print(f"VideoFrameExtractor initialized with video path: {self.video_path}")
+
+    def get_given_model(self, model_path, types):
+        try:
+            if types == "RTDETR":
+                return RTDETR(os.path.join('models', model_path))
+            elif types == "YOLO":
+                return YOLO(os.path.join('models', model_path))
+            elif types == "NAS":
+                return NAS(os.path.join('models', model_path))
+        except Exception as e:
+            raise ValueError(f"Model architecture and Model not Matching:  {str(e)}")
 
     def load_classes(self, config_path):
         """
@@ -75,7 +86,7 @@ class VideoFrameExtractor:
                     if self.sahi_utils:
                         results = self.sahi_utils.perform_sliced_inference(transformed_image)
                     else:
-                        results = self.yolo_model.predict(transformed_image, conf=model_confidence, verbose=False)
+                        results = self.vision_model.predict(transformed_image, conf=model_confidence, verbose=False)
 
                     # print(results)
 
