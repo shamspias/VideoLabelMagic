@@ -53,6 +53,7 @@ class VideoLabelApp:
             'rotate': 'Rotate 90 degrees' in transformation_options
         }
         self.format_selection = st.selectbox("Choose output format:", list(self.format_options.keys()))
+        self.model_types = st.selectbox("Choose Model Types:", ("YOLO", "RTDETR", "NAS"))
         self.sahi_enabled = st.sidebar.checkbox("Enable SAHI", value=self.config.sahi_enabled)
         if self.sahi_enabled:
             self.config.sahi_model_type = st.sidebar.selectbox("Model Architecture:", ["yolov8", "yolov9", "yolov10"])
@@ -116,7 +117,7 @@ class VideoLabelApp:
         try:
             extractor = VideoFrameExtractor(self.config, video_path, self.frame_rate, specific_output_dir,
                                             self.model_selection, class_config_path, output_format_instance,
-                                            self.transformations, self.sahi_config)
+                                            self.transformations, self.model_types, self.sahi_config)
             extractor.extract_frames(self.model_confidence)
             if self.format_selection == "CVAT":
                 output_format_instance.zip_and_cleanup()
