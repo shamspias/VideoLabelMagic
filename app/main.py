@@ -65,7 +65,7 @@ class VideoLabelApp:
                                                                                        "mmdet",
                                                                                        ]
                                                                )
-            self.config.sahi_device = st.sidebar.selectbox("Device:", ["cpu"], ["cuda:0"])
+            self.config.sahi_device = st.sidebar.selectbox("Device:", ["cpu", "cuda:0"])
             self.config.sahi_slice_size = st.sidebar.slider("SAHI slice size:", 128, 512, (256, 256))
             self.config.sahi_overlap_ratio = st.sidebar.slider("SAHI overlap ratio:", 0.1, 0.5, (0.2, 0.2))
             self.sahi_config = {
