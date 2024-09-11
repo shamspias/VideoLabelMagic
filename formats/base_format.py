@@ -66,24 +66,29 @@ class BaseFormat:
             for box in results['boxes']:  # Assuming SAHI results are formatted similarly
                 class_id = int(box['cls'][0])
                 if class_id in supported_classes:  # Check if class_id is in the list of supported classes
+                    class_id_index = supported_classes.index(
+                        class_id)  # Get index of class_id in supported_classes list
                     xmin, ymin, xmax, ymax = box['xyxy'][0]
                     x_center = ((xmin + xmax) / 2) / img_width
                     y_center = ((ymin + ymax) / 2) / img_height
                     width = (xmax - xmin) / img_width
                     height = (ymax - ymin) / img_height
-                    annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+                    annotations.append(f"{class_id_index} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
         else:
             for result in results:
                 if hasattr(result, 'boxes') and result.boxes is not None:
                     for box in result.boxes:
                         class_id = int(box.cls[0])
                         if class_id in supported_classes:  # Check if class_id is in the list of supported classes
+                            class_id_index = supported_classes.index(
+                                class_id)  # Get index of class_id in supported_classes list
                             xmin, ymin, xmax, ymax = box.xyxy[0]
                             x_center = ((xmin + xmax) / 2) / img_width
                             y_center = ((ymin + ymax) / 2) / img_height
                             width = (xmax - xmin) / img_width
                             height = (ymax - ymin) / img_height
-                            annotations.append(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+                            annotations.append(
+                                f"{class_id_index} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
 
         return annotations
 
