@@ -1,7 +1,9 @@
 import cv2
 import os
-from ultralytics import YOLO, RTDETR, NAS
+import torch  # Import torch to check for CUDA availability
 import yaml
+
+from ultralytics import YOLO, RTDETR, NAS
 from utils.image_processor import ImageProcessor
 from utils.sahi_utils import SahiUtils
 
@@ -30,6 +32,9 @@ class VideoFrameExtractor:
         self.vision_model = self.get_given_model(model_path, model_types)
 
         self.image_processor = ImageProcessor(output_size=self.transformations.get('size', (640, 640)))
+
+        # Set the device (CUDA or CPU)
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         # Only initialize SahiUtils if SAHI is enabled
         if sahi_config:
@@ -116,16 +121,20 @@ class VideoFrameExtractor:
                     frame_path = os.path.join(self.output_dir, 'images', frame_filename)
 
                     cv2.imwrite(frame_path, transformed_image)
+                    # success = cv2.imwrite(frame_path, transformed_image)
+                    # if not success and self.config.debug:
+                    #     print(f"Failed to write image to {frame_path}")
+                    #     continue  # Skip further processing for this frame
                     if self.sahi_utils:
                         results = self.sahi_utils.perform_sliced_inference(transformed_image)
                     else:
                         if self.config.debug:
                             results = self.vision_model.predict(transformed_image, conf=model_confidence, verbose=False,
-                                                                classes=self.supported_classes_ids)
+                                                                classes=self.supported_classes_ids, device=self.device)
                             # will add image show later time
                         else:
                             results = self.vision_model.predict(transformed_image, conf=model_confidence, verbose=False,
-                                                                classes=self.supported_classes_ids)
+                                                                classes=self.supported_classes_ids, device=self.device)
 
                     # print(results)
 
