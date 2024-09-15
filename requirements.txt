@@ -21,8 +21,8 @@ boto3
 sahi
 
 # PyTorch with CUDA 12.6 support for GPU acceleration
-torch==2.0.1+cu126  # PyTorch version with CUDA 12.6
-torchvision==0.15.2+cu126  # TorchVision with CUDA 12.6
+# torch==2.0.1+cu124  # PyTorch version with CUDA 12.6
+# torchvision==0.15.2+cu124  # TorchVision with CUDA 12.6
 
 # Additional dependencies for models or utilities
 matplotlib  # For plotting images (used in sahi_utils.py)
