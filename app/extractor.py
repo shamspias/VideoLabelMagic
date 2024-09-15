@@ -1,7 +1,9 @@
 import cv2
 import os
-from ultralytics import YOLO, RTDETR, NAS
+import torch  # Import torch to check for CUDA availability
 import yaml
+
+from ultralytics import YOLO, RTDETR, NAS
 from utils.image_processor import ImageProcessor
 from utils.sahi_utils import SahiUtils
 
@@ -30,6 +32,9 @@ class VideoFrameExtractor:
         self.vision_model = self.get_given_model(model_path, model_types)
 
         self.image_processor = ImageProcessor(output_size=self.transformations.get('size', (640, 640)))
+
+        # Set the device (CUDA or CPU)
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         # Only initialize SahiUtils if SAHI is enabled
         if sahi_config:
@@ -125,11 +130,11 @@ class VideoFrameExtractor:
                     else:
                         if self.config.debug:
                             results = self.vision_model.predict(transformed_image, conf=model_confidence, verbose=False,
-                                                                classes=self.supported_classes_ids)
+                                                                classes=self.supported_classes_ids, device=self.device)
                             # will add image show later time
                         else:
                             results = self.vision_model.predict(transformed_image, conf=model_confidence, verbose=False,
-                                                                classes=self.supported_classes_ids)
+                                                                classes=self.supported_classes_ids, device=self.device)
 
                     # print(results)
 
