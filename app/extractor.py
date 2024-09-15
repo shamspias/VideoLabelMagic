@@ -116,6 +116,10 @@ class VideoFrameExtractor:
                     frame_path = os.path.join(self.output_dir, 'images', frame_filename)
 
                     cv2.imwrite(frame_path, transformed_image)
+                    # success = cv2.imwrite(frame_path, transformed_image)
+                    # if not success and self.config.debug:
+                    #     print(f"Failed to write image to {frame_path}")
+                    #     continue  # Skip further processing for this frame
                     if self.sahi_utils:
                         results = self.sahi_utils.perform_sliced_inference(transformed_image)
                     else:
