@@ -34,8 +34,12 @@ class VideoFrameExtractor:
         self.image_processor = ImageProcessor(output_size=self.transformations.get('size', (640, 640)))
 
         # Set the device (CUDA or CPU)
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+        # Ensure CUDA is available
+        if torch.cuda.is_available():
+            torch.cuda.set_device(0)  # Sets GPU 0 (modify if using multiple GPUs)
+            self.device = 'cuda'
+        else:
+            self.device = 'cpu'
         # Only initialize SahiUtils if SAHI is enabled
         if sahi_config:
             self.sahi_utils = SahiUtils(self.config.debug, self.supported_classes_map,
